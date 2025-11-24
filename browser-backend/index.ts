@@ -25,26 +25,25 @@ const activeSessions = new Map<string, { browser: Browser; sessionId: string }>(
 app.post('/api/airbnb', async (req: express.Request, res: express.Response): Promise<void> => {
     try {
         let browser: Browser;
-        let sessionKey: string;
 
         const session = await steelClient.createSession({
             timeout: 600000,
         });
 
-        sessionKey = session.id || session.sessionId || session.session_id;
-
-        const cdpUrl = steelClient.getCdpUrl(session);
+        console.log(session);
 
         browser = await puppeteer.connect({
-            browserWSEndpoint: cdpUrl,
+            browserWSEndpoint: session.websocketUrl,
             defaultViewport: null,
         });
 
-        activeSessions.set(sessionKey, { browser, sessionId: sessionKey });
+        activeSessions.set(session.id, { browser, sessionId: session.id });
 
         res.json({
-            sessionId: sessionKey,
-            liveUrl: steelClient.getLiveViewUrl(sessionKey),
+            sessionId: session.id,
+            liveUrl: session.sessionViewerUrl,
+            debugUrl: session.debugUrl,
+            cdpUrl: session.websocketUrl,
         });
 
         const task = `
@@ -64,9 +63,9 @@ app.post('/api/airbnb', async (req: express.Request, res: express.Response): Pro
             console.log(update.data);
             console.log(update.data.output);
             if (update.data.status === "finished") {
-                await browser.disconnect();
-                await steelClient.deleteSession(sessionKey);
-                activeSessions.delete(sessionKey);
+                // await browser.disconnect();
+                // await steelClient.deleteSession(sessionKey);
+                // activeSessions.delete(sessionKey);
                 if (update.data.output) {
                     for (const listing of update.data.output) {
                         console.log(`${listing}`);

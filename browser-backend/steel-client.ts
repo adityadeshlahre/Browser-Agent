@@ -1,10 +1,16 @@
 import axios from "axios";
+import Steel from 'steel-sdk';
 
 export class SteelBrowserClient {
     private baseUrl: string;
+    private steel: Steel;
 
     constructor(baseUrl: string = 'http://localhost:3000') {
         this.baseUrl = baseUrl;
+        this.steel = new Steel({
+            baseURL: this.baseUrl,
+            timeout: 600000,
+        });
     }
 
     async createSession(options?: {
@@ -13,14 +19,14 @@ export class SteelBrowserClient {
         timeout?: number;
     }) {
         try {
-            const response = await axios.post(`${this.baseUrl}/v1/sessions`, {
-                user_agent: options?.userAgent,
-                proxy_url: options?.proxyUrl,
+            const response = await this.steel.sessions.create({
+                userAgent: options?.userAgent,
+                proxyUrl: options?.proxyUrl,
                 timeout: options?.timeout || 300000,
             });
 
-            console.log('Steel Browser session response:', response.data);
-            return response.data;
+            console.log('Steel Browser session response:', response);
+            return response;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const message = error.response?.data?.message || error.message;
@@ -51,7 +57,7 @@ export class SteelBrowserClient {
 
     async deleteSession(sessionId: string) {
         try {
-            await axios.delete(`${this.baseUrl}/v1/sessions/${sessionId}`);
+            await this.steel.sessions.release(sessionId);
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const message = error.response?.data?.message || error.message;
@@ -65,17 +71,19 @@ export class SteelBrowserClient {
     }
 
     getCdpUrl(sessionData: any): string {
-        return sessionData.websocketUrl ||
-            sessionData.cdp_url ||
-            sessionData.cdpUrl ||
-            sessionData.ws_url ||
-            sessionData.wsUrl ||
-            sessionData.websocket_url ||
-            `ws://localhost:9223`;
+        return sessionData.websocketUrl;
     }
 
-    getLiveViewUrl(sessionId: string): string {
-        return `http://localhost:5173/session/${sessionId}`;
+    getLiveViewUrl(sessionData: any): string {
+        return sessionData.sessionViewerUrl;
+    }
+
+    getDebugUrl(sessionData: any): string {
+        return sessionData.debugUrl;
+    }
+
+    getDevtoolsUrl(sessionData: any): string {
+        return sessionData.debuggerUrl;
     }
 }
 
