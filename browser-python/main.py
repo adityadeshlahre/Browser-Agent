@@ -35,6 +35,8 @@ steel_client = SteelBrowserClient(STEEL_URL)
 
 active_sessions = {}
 
+PUBLIC_HOST = "agent.aditya.ovh"
+
 @app.post("/api/airbnb")
 async def airbnb_handler(_: dict | None = None):
     try:
@@ -48,11 +50,18 @@ async def airbnb_handler(_: dict | None = None):
 
         live_url = steel_client.get_live_view_url(session)
 
+        if live_url:
+            live_url = live_url.replace("0.0.0.0", PUBLIC_HOST)
+        if debug_url:
+            debug_url = debug_url.replace("0.0.0.0", PUBLIC_HOST)
+        if cdp_url:
+            cdp_url = cdp_url.replace("0.0.0.0", PUBLIC_HOST)
+
         active_sessions[session_id] = {
             'session': session,
             'cdp_url': cdp_url,
             'debug_url': debug_url,
-            'live_url': live_url
+            'live_url': live_url,
         }
 
         response = {
