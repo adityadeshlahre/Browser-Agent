@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from browser_use import Agent, ChatBrowserUse
+from browser_use import Agent, ChatBrowserUse, Browser
+from browser_use.browser import ProxySettings
 from dotenv import load_dotenv
 from steel_client import SteelBrowserClient
 import os
@@ -68,26 +69,32 @@ async def airbnb_handler(_: dict | None = None):
 
 
 async def run_browser_use_task(cdp_url: str, session_id: str):
-    playwright_instance = None
-    browser = None
+    # playwright_instance = None
+    # browser = None
     try:
-        playwright_instance = await async_playwright().start()
+        # playwright_instance = await async_playwright().start()
 
-        print(playwright_instance)
+        # print(playwright_instance)
 
         print(cdp_url)
 
-        browser = await playwright_instance.chromium.connect_over_cdp(cdp_url)
+        browser = Browser(
+            headless = False,
+            # proxy_settings = ProxySettings(
+            #     server="http://0.0.0.0:3000"
+            # ),
+            cdp_url=cdp_url
+        )
 
-        print(browser)
+        # print(browser)
 
-        if browser.contexts:
-            context = browser.contexts[0]
-        else:
-            context = await browser.new_context()
+        # if browser.contexts:
+        #     context = browser.contexts[0]
+        # else:
+        #     context = await browser.new_context()
         
-        if not context.pages:
-            page = await context.new_page()
+        # if not context.pages:
+        #     page = await context.new_page()
         
         llm = ChatBrowserUse(api_key=BROWSER_USE_API_KEY)
 
@@ -102,7 +109,7 @@ Select any available dates to find rooms.
         agent = Agent(
             task=task,
             llm=llm,
-            browser_context=context
+            browser=browser
         )
         
         result = await agent.run()
