@@ -29,13 +29,26 @@ class SteelBrowserClient:
 
     async def delete_session(self, session_id: str) -> None:
         try:
-            await self.steel.sessions.release(session_id)
+            self.steel.sessions.release(session_id)
         except Exception as e:
             raise Exception(f"Failed to delete Steel session: {str(e)}")
 
     def get_cdp_url(self, session_data: Any) -> str:
-        session_id = getattr(session_data, 'id', '')
-        return f"ws://localhost:3000/sessions/{session_id}/cdp"
+        websocket_url = (
+            getattr(session_data, "websocketUrl", None)
+            or getattr(session_data, "websocket_url", None)
+            or ""
+        )
+
+        session_id = getattr(session_data, "id", None)
+
+        if not websocket_url or not session_id:
+            return ""
+
+        if not websocket_url.endswith("/"):
+            websocket_url += "/"
+
+        return f"{websocket_url}devtools/browser/{session_id}"
 
     def get_live_view_url(self, session_data: Any) -> str:
         return getattr(session_data, 'sessionViewerUrl', getattr(session_data, 'session_viewer_url', ''))

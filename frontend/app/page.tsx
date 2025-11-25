@@ -11,12 +11,7 @@ export default function Home() {
     liveUrl: string;
     debugUrl: string;
     cdpUrl: string;
-  }>({
-    sessionId: "",
-    liveUrl: "",
-    debugUrl: "",
-    cdpUrl: "",
-  });
+  } | null>(null);
   const vmBase = process.env.NEXT_PUBLIC_VM_BASE || "http://localhost:3001";
 
   const startAutomation = async () => {
@@ -40,38 +35,12 @@ export default function Home() {
         <button
           onClick={startAutomation}
           disabled={running}
-          style={{ padding: "12px 20px" }}
+          style={{ padding: "12px 20px", fontSize: "16px", fontWeight: "bold", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
         >
           {running ? "Starting..." : "Start Airbnb automation (San Francisco)"}
         </button>
       </div>
-      {result?.liveUrl && (
-        <div style={{ marginBottom: "16px" }}>
-          <h3>Live Session Viewer:</h3>
-          <a
-            href={result.liveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ wordBreak: "break-all", fontSize: "14px" }}
-          >
-            {result.liveUrl}
-          </a>
-        </div>
-      )}
-      {result?.debugUrl && (
-        <div style={{ marginBottom: "24px" }}>
-          <h3>Debug URL (DevTools):</h3>
-          <a
-            href={result.debugUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ wordBreak: "break-all", fontSize: "14px" }}
-          >
-            {result.debugUrl}
-          </a>
-        </div>
-      )}
-      <SessionViewer liveUrl={result?.liveUrl || ""} />
+      <SessionViewer liveUrl={result?.debugUrl || ""} />
       {result && (
         <div style={{ marginTop: "24px" }}>
           <h3>Session Info:</h3>
@@ -92,7 +61,7 @@ const SessionViewer: React.FC<SessionViewerProps> = ({ liveUrl }) => {
       <div
         style={{
           width: "100%",
-          height: 600,
+          height: "600px",
           background: "#eee",
           display: "flex",
           alignItems: "center",
@@ -109,19 +78,7 @@ const SessionViewer: React.FC<SessionViewerProps> = ({ liveUrl }) => {
   const embedUrl = `${liveUrl}?interactive=true`;
 
   return (
-    <div className="session-container">
-      <div
-        className="status-banner"
-        style={{
-          background: "#f0f0f0",
-          padding: "10px",
-          marginBottom: "10px",
-          textAlign: "center",
-        }}
-      >
-        Live Steel Browser Session - Click inside to interact
-      </div>
-
+    <div style={{ width: "100%", height: "600px" }}>
       <iframe
         src={embedUrl}
         style={{

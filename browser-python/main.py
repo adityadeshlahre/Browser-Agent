@@ -23,6 +23,7 @@ app.add_middleware(
 os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
 BROWSER_USE_API_KEY = os.getenv("BROWSER_USE_API_KEY")
+
 print("BROWSER_USE_API_KEY:", BROWSER_USE_API_KEY)
 
 steel_client = SteelBrowserClient('http://0.0.0.0:3000')
@@ -38,15 +39,21 @@ async def airbnb_handler(_: dict | None = None):
         
         cdp_url = steel_client.get_cdp_url(session)
 
+        debug_url = steel_client.get_debug_url(session)
+
+        live_url = steel_client.get_live_view_url(session)
+
         active_sessions[session_id] = {
             'session': session,
-            'cdp_url': cdp_url
+            'cdp_url': cdp_url,
+            'debug_url': debug_url,
+            'live_url': live_url
         }
 
         response = {
             "sessionId": session_id,
-            "liveUrl": steel_client.get_live_view_url(session),
-            "debugUrl": steel_client.get_debug_url(session),
+            "liveUrl": live_url,
+            "debugUrl": debug_url,
             "cdpUrl": cdp_url,
         }
 
@@ -66,9 +73,13 @@ async def run_browser_use_task(cdp_url: str, session_id: str):
     try:
         playwright_instance = await async_playwright().start()
 
+        print(playwright_instance)
+
         print(cdp_url)
 
         browser = await playwright_instance.chromium.connect_over_cdp(cdp_url)
+
+        print(browser)
 
         if browser.contexts:
             context = browser.contexts[0]
@@ -100,18 +111,18 @@ Select any available dates to find rooms.
     except Exception as e:
         print(f"Error in browser-use task: {e}")
         traceback.print_exc()
-    finally:
+    # finally:
         # if browser:
         #     await browser.close()
         # if playwright_instance:
         #     await playwright_instance.stop()
-        if session_id in active_sessions:
-            del active_sessions[session_id]
+        # if session_id in active_sessions:
+        #     del active_sessions[session_id]
 
-        try:
-            await steel_client.delete_session(session_id)
-        except Exception as e:
-            print(f"Error deleting session: {e}")
+        # try:
+        #     await steel_client.delete_session(session_id)
+        # except Exception as e:
+        #     print(f"Error deleting session: {e}")
 
 
 if __name__ == "__main__":
