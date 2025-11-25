@@ -1,8 +1,11 @@
 from steel import Steel
 from typing import Optional, Dict, Any
+import os
+
+STEEL_URL = os.getenv("STEEL_URL")
 
 class SteelBrowserClient:
-    def __init__(self, base_url: str = 'http://0.0.0.0:3000'):
+    def __init__(self, base_url: str = STEEL_URL):
         self.base_url = base_url
         self.timeout = 600000
         self.steel = Steel(base_url=base_url, timeout=self.timeout)

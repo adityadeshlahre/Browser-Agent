@@ -25,9 +25,13 @@ os.environ["ANONYMIZED_TELEMETRY"] = "false"
 
 BROWSER_USE_API_KEY = os.getenv("BROWSER_USE_API_KEY")
 
+STEEL_URL = os.getenv("STEEL_URL")
+
 print("BROWSER_USE_API_KEY:", BROWSER_USE_API_KEY)
 
-steel_client = SteelBrowserClient('http://0.0.0.0:3000')
+print("STEEL_URL:", STEEL_URL)
+
+steel_client = SteelBrowserClient(STEEL_URL)
 
 active_sessions = {}
 
@@ -80,9 +84,6 @@ async def run_browser_use_task(cdp_url: str, session_id: str):
 
         browser = Browser(
             headless = False,
-            # proxy_settings = ProxySettings(
-            #     server="http://0.0.0.0:3000"
-            # ),
             cdp_url=cdp_url
         )
 
