@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from browser_use import Agent, ChatBrowserUse, Browser
 from browser_use.browser import ProxySettings
@@ -8,16 +8,33 @@ import os
 import asyncio
 from playwright.async_api import async_playwright
 import traceback
+from pydantic import BaseModel
+from typing import Optional
 
 load_dotenv()
 
 app = FastAPI()
 
+class SessionResponse(BaseModel):
+    sessionId: str
+    liveUrl: str
+    debugUrl: str
+    cdpUrl: str
+
+class ErrorResponse(BaseModel):
+    status: str
+    message: str
+    error: Optional[str] = None
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://agent.aditya.ovh",
+        "https://api.aditya.ovh",
+        "http://localhost:3002",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -35,8 +52,13 @@ steel_client = SteelBrowserClient(STEEL_URL)
 
 active_sessions = {}
 
-@app.post("/api/airbnb")
-async def airbnb_handler(_: dict | None = None):
+@app.get("/")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "browser-python"}
+
+@app.post("/api/airbnb", response_model=SessionResponse)
+async def airbnb_handler(_: dict | None = None) -> SessionResponse:
     try:
         session = await steel_client.create_session(timeout=600000)
 
@@ -64,12 +86,15 @@ async def airbnb_handler(_: dict | None = None):
 
         asyncio.create_task(run_browser_use_task(session_ws, session_id))
 
-        return response
+        return SessionResponse(**response)
 
     except Exception as e:
         print(f"Error: {e}")
         traceback.print_exc()
-        return {"status": "error", "message": str(e)}
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "error", "message": "Failed to create session", "error": str(e)}
+        )
 
 
 async def run_browser_use_task(cdp_url: str, session_id: str):

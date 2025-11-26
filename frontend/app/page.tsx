@@ -6,16 +6,23 @@ import React from "react";
 
 export default function Home() {
   const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{
     sessionId: string;
     liveUrl: string;
     debugUrl: string;
     cdpUrl: string;
   } | null>(null);
-  const vmBase = process.env.NEXT_PUBLIC_VM_BASE || "http://localhost:3001";
+
+  const vmBase = process.env.NEXT_PUBLIC_VM_BASE;
+
+  if (!vmBase) {
+    throw new Error('NEXT_PUBLIC_VM_BASE environment variable is required');
+  }
 
   const startAutomation = async () => {
     setRunning(true);
+    setError(null);
     try {
       const res = await axios.post(vmBase + "/api/airbnb");
       setResult(res.data);
@@ -23,7 +30,7 @@ export default function Home() {
     } catch (e) {
       console.error(e);
       const errorMessage = e instanceof Error ? e.message : String(e);
-      alert("Error starting automation: " + errorMessage);
+      setError(errorMessage);
     } finally {
       setRunning(false);
     }
@@ -40,6 +47,11 @@ export default function Home() {
           {running ? "Starting..." : "Start Airbnb automation (San Francisco)"}
         </button>
       </div>
+      {error && (
+        <div style={{ color: '#dc2626', padding: '12px', backgroundColor: '#fee2e2', borderRadius: '4px', marginBottom: '24px', border: '1px solid #fca5a5' }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
       <SessionViewer liveUrl={result?.debugUrl || ""} />
       {result && (
         <div style={{ marginTop: "24px" }}>

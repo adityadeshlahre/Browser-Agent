@@ -1,5 +1,5 @@
 import axios from "axios";
-import Steel from 'steel-sdk';
+import Steel from 'steel-sdk/index.mjs';
 
 export class SteelBrowserClient {
     private baseUrl: string;
