@@ -6,6 +6,9 @@ services:
       - "9223:9223"
     volumes:
       - ./.cache:/app/.cache
+    environment:
+      - DOMAIN=${DOMAIN:-}
+      - CDP_DOMAIN=${CDP_DOMAIN:-}
     networks:
       - steel-network
 
@@ -24,6 +27,9 @@ services:
     image: aivalacoder/browser-agent-python:latest
     ports:
       - "3001:3001"
+    environment:
+      - BROWSER_USE_API_KEY=
+      - STEEL_URL=http://0.0.0.0:3000
     volumes:
       - ./.cache:/app/.cache
     networks:

@@ -35,7 +35,14 @@ steel_client = SteelBrowserClient(STEEL_URL)
 
 active_sessions = {}
 
-PUBLIC_HOST = "steel.aditya.ovh"
+def force_https_wss(url: str | None):
+    if not url:
+        return url
+    if url.startswith("http://"):
+        return url.replace("http://", "https://", 1)
+    if url.startswith("ws://"):
+        return url.replace("ws://", "wss://", 1)
+    return url
 
 @app.post("/api/airbnb")
 async def airbnb_handler(_: dict | None = None):
@@ -44,38 +51,27 @@ async def airbnb_handler(_: dict | None = None):
 
         session_id = session.id if hasattr(session, 'id') else session.get('id')
         
-        cdp_url = steel_client.get_cdp_url(session)
+        session_debug = force_https_wss(session.debugUrl or session.get("debugUrl"))
 
-        debug_url = steel_client.get_debug_url(session)
+        session_ws = force_https_wss(session.websocketUrl or session.get("websocketUrl"))
 
-        live_url = steel_client.get_live_view_url(session)
-
-        if live_url:
-            live_url = live_url.replace("0.0.0.0", PUBLIC_HOST)
-        if debug_url:
-            debug_url = debug_url.replace("0.0.0.0", PUBLIC_HOST)
-        if cdp_url:
-            cdp_url = cdp_url.replace("0.0.0.0", PUBLIC_HOST)
-
-        live_url = live_url.replace("http://", "https://")
-        debug_url = debug_url.replace("http://", "https://")
-        cdp_url = cdp_url.replace("ws://", "wss://")
+        session_live = force_https_wss(session.sessionViewerUrl or session.get("sessionViewerUrl"))
 
         active_sessions[session_id] = {
             'session': session,
-            'cdp_url': cdp_url,
-            'debug_url': debug_url,
-            'live_url': live_url,
+            'cdp_url': session_ws,
+            'debug_url': session_debug,
+            'live_url': session_live,
         }
 
         response = {
             "sessionId": session_id,
-            "liveUrl": live_url,
-            "debugUrl": debug_url,
-            "cdpUrl": cdp_url,
+            "liveUrl": session_live,
+            "debugUrl": session_debug,
+            "cdpUrl": session_ws,
         }
 
-        asyncio.create_task(run_browser_use_task(cdp_url, session_id))
+        asyncio.create_task(run_browser_use_task(session_ws, session_id))
 
         return response
 
@@ -86,29 +82,13 @@ async def airbnb_handler(_: dict | None = None):
 
 
 async def run_browser_use_task(cdp_url: str, session_id: str):
-    # playwright_instance = None
-    # browser = None
     try:
-        # playwright_instance = await async_playwright().start()
-
-        # print(playwright_instance)
-
         print(cdp_url)
 
         browser = Browser(
             headless = False,
             cdp_url=cdp_url
         )
-
-        # print(browser)
-
-        # if browser.contexts:
-        #     context = browser.contexts[0]
-        # else:
-        #     context = await browser.new_context()
-        
-        # if not context.pages:
-        #     page = await context.new_page()
         
         llm = ChatBrowserUse(api_key=BROWSER_USE_API_KEY)
 
