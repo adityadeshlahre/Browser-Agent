@@ -35,15 +35,6 @@ steel_client = SteelBrowserClient(STEEL_URL)
 
 active_sessions = {}
 
-def force_https_wss(url: str | None):
-    if not url:
-        return url
-    if url.startswith("http://"):
-        return url.replace("http://", "https://", 1)
-    if url.startswith("ws://"):
-        return url.replace("ws://", "wss://", 1)
-    return url
-
 @app.post("/api/airbnb")
 async def airbnb_handler(_: dict | None = None):
     try:
@@ -51,11 +42,11 @@ async def airbnb_handler(_: dict | None = None):
 
         session_id = session.id if hasattr(session, 'id') else session.get('id')
         
-        session_debug = force_https_wss(session.debugUrl or session.get("debugUrl"))
+        session_debug = session.debugUrl or session.get("debugUrl")
 
-        session_ws = force_https_wss(session.websocketUrl or session.get("websocketUrl"))
+        session_ws = session.websocketUrl or session.get("websocketUrl")
 
-        session_live = force_https_wss(session.sessionViewerUrl or session.get("sessionViewerUrl"))
+        session_live = session.sessionViewerUrl or session.get("sessionViewerUrl")
 
         active_sessions[session_id] = {
             'session': session,
